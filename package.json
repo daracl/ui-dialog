@@ -39,6 +39,7 @@
     "style"
   ],
   "dependencies": {
+    "@daracl/ui-style": "^0.0.1",
     "sass-embedded": "^1.80.3",
     "typescript": "^5.1.6"
   },

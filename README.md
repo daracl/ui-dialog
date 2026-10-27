@@ -76,3 +76,17 @@ var dialogObj = Daracl.dialog.create({
 | callback |  클릭시 callback |   |  |
 
 ```
+
+# 테마
+
+글자 / 배경 / 테두리 색은 [`@daracl/ui-style`](https://www.npmjs.com/package/@daracl/ui-style) 의 테마 변수(`--dui-*`)를 사용합니다.
+light 값이 기본값으로 들어 있어 별도 설정 없이도 표시되지만, **dark 테마를 쓰려면 테마 변수 CSS 를 함께 로드**해야 합니다.
+
+```js
+import '@daracl/ui-style/theme-vars.css';
+
+// dark 로 전환
+document.documentElement.setAttribute('data-daracl-theme', 'dark');
+```
+
+> `style/` 의 SCSS 원본을 직접 컴파일하는 경우 `@daracl/ui-style` 을 찾을 수 있어야 합니다. (sass CLI : `--load-path=node_modules`)
