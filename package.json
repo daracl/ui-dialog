@@ -39,9 +39,9 @@
     "style"
   ],
   "dependencies": {
-    "@daracl/ui-style": "^0.0.6",
+    "@daracl/ui-style": "^0.0.8",
     "sass-embedded": "^1.80.3",
-    "typescript": "^5.1.6"
+    "typescript": "5.6.3"
   },
   "prettier": {
     "printWidth": 256,
