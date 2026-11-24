@@ -1,0 +1,18 @@
+{
+  // JavaScript 소스를 JSDoc 기준으로 타입 검사하고 types/index.d.ts 의 공개 선언을 확인한다. (파일을 만들지 않는다)
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "emitDeclarationOnly": false,
+    "declaration": false,
+    "checkJs": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "dom.iterable", "es2022"],
+    "types": []
+  },
+  "include": ["src/**/*.js", "src/global.d.ts", "types/**/*.d.ts", "test/types/**/*.ts"]
+}

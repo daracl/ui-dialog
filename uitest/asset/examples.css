@@ -1,0 +1,378 @@
+/* uitest 공통 스타일 (ui-grid uitest/asset/examples.css 기준)
+   예제 화면의 레이아웃 · 컨트롤에만 적용하고 dialog 내부(.daracl-dialog-hidden 안)에는 적용하지 않는다. */
+:root {
+  --ex-font: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", helvetica, "Apple SD Gothic Neo", sans-serif;
+  --ex-bg: #f3f5f9;
+  --ex-panel: #fff;
+  --ex-text: #20304a;
+  --ex-muted: #687891;
+  --ex-border: #dfe5ee;
+  --ex-input-border: #d5deea;
+  --ex-control: #304565;
+  --ex-accent: #365fe5;
+  --ex-accent-hover: #244ccf;
+  --ex-accent-soft: #eef3ff;
+  --ex-code-bg: #152238;
+  --ex-code-color: #dce7fa;
+  font-family: var(--ex-font);
+  color: var(--ex-text);
+  background: var(--ex-bg);
+  font-size: 14px;
+}
+
+/* 페이지 다크 (dialog 는 @daracl/ui-style 의 data-daracl-theme 로 함께 바뀐다) */
+:root[data-daracl-theme="dark"] {
+  --ex-bg: #141414;
+  --ex-panel: #1d1e1f;
+  --ex-text: #e5eaf3;
+  --ex-muted: #a3a6ad;
+  --ex-border: #363637;
+  --ex-input-border: #4c4d4f;
+  --ex-control: #cfd3dc;
+  --ex-accent: #6c8cff;
+  --ex-accent-hover: #8aa3ff;
+  --ex-accent-soft: #1f2a44;
+  --ex-code-bg: #0a0a0a;
+}
+
+/* ==========================================================================
+   예제 화면 공통 레이아웃
+   ========================================================================== */
+body.example-page {
+  margin: 0;
+  background: var(--ex-bg);
+  color: var(--ex-text);
+  font: 14px/1.6 var(--ex-font);
+}
+.example-page > .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 28px;
+  background: var(--ex-panel);
+  border-bottom: 1px solid var(--ex-border);
+}
+.example-page > .page-header h1 {
+  margin: 7px 0 0;
+  font-size: 24px;
+  letter-spacing: -1px;
+  line-height: 1.3;
+}
+.example-page > .page-header p {
+  margin: 0;
+  color: var(--ex-muted);
+}
+.example-page > .page-header a,
+.example-page .example-content a {
+  color: var(--ex-accent);
+  text-decoration: none;
+}
+.example-page > .page-header a {
+  font-size: 12px;
+}
+.example-page .page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--ex-muted);
+}
+.example-page main {
+  box-sizing: border-box;
+  width: calc(100% - 48px);
+  max-width: 1280px;
+  margin: 24px auto;
+  display: grid;
+  gap: 20px;
+}
+.example-page .example-content {
+  box-sizing: border-box;
+  padding: 20px;
+  background: var(--ex-panel);
+  border: 1px solid var(--ex-border);
+  border-radius: 12px;
+  box-shadow: 0 3px 12px #20304a05;
+}
+.example-page .example-content > h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+.example-page .example-content > p {
+  margin: 0 0 16px;
+  color: var(--ex-muted);
+}
+.example-page .example-content code {
+  font: 12px Consolas, monospace;
+  background: var(--ex-bg);
+  border: 1px solid var(--ex-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.example-page .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 컨트롤 : dialog 안의 요소에는 적용하지 않는다 */
+.example-page :is(button, input, select, textarea):not(.daracl-dialog-hidden *) {
+  box-sizing: border-box;
+  border: 1px solid var(--ex-input-border);
+  border-radius: 6px;
+  background: var(--ex-panel);
+  color: var(--ex-control);
+  padding: 8px 12px;
+  font: inherit;
+  max-width: 100%;
+}
+.example-page :is(input[type="checkbox"], input[type="radio"]):not(.daracl-dialog-hidden *) {
+  accent-color: var(--ex-accent);
+  padding: 0;
+  margin: 0;
+}
+.example-page button:not(.daracl-dialog-hidden *) {
+  cursor: pointer;
+}
+.example-page button:not(.daracl-dialog-hidden *):hover {
+  background: var(--ex-accent-soft);
+  border-color: var(--ex-accent);
+}
+.example-page button.primary:not(.daracl-dialog-hidden *) {
+  background: var(--ex-accent);
+  border-color: var(--ex-accent);
+  color: #fff;
+}
+.example-page button.primary:not(.daracl-dialog-hidden *):hover {
+  background: var(--ex-accent-hover);
+}
+.example-page :is(button, input, select, textarea, a):not(.daracl-dialog-hidden *):focus-visible {
+  outline: 2px solid var(--ex-accent);
+  outline-offset: 2px;
+}
+
+/* 옵션 폼 (demo.html) */
+.example-page .option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px 16px;
+  margin-bottom: 16px;
+}
+.example-page .option-grid label.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.example-page .option-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px 16px;
+  padding: 14px 0;
+  margin-bottom: 16px;
+  border-top: 1px solid var(--ex-border);
+  border-bottom: 1px solid var(--ex-border);
+}
+.example-page .option-checks label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.example-page .option-checks code {
+  font-size: 11px;
+}
+
+/* 2단 (설명 + 결과) */
+.example-page .split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+/* 코드 · 로그 */
+.example-page pre.code,
+.example-page pre.log {
+  margin: 0;
+  background: var(--ex-code-bg);
+  color: var(--ex-code-color);
+  padding: 16px 18px;
+  border-radius: 8px;
+  font: 12px/1.6 Consolas, monospace;
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.example-page pre.log:empty::before {
+  content: "실행 결과가 여기에 표시됩니다.";
+  opacity: 0.5;
+}
+.example-page .panel-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ex-muted);
+}
+.example-page .panel-title button {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* 카드 목록 (버튼 스타일, 보안 비교 등) */
+.example-page .cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+.example-page .card {
+  border: 1px solid var(--ex-border);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.example-page .card h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.example-page .card p {
+  margin: 0;
+  color: var(--ex-muted);
+  font-size: 12px;
+  flex: 1;
+}
+.example-page .badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--ex-accent-soft);
+  color: var(--ex-accent);
+}
+.example-page .badge.warn {
+  background: #fff4e5;
+  color: #a35a00;
+}
+:root[data-daracl-theme="dark"] .example-page .badge.warn {
+  background: #3d2a10;
+  color: #ffc069;
+}
+.example-page table.info {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.example-page table.info :is(th, td) {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--ex-border);
+  vertical-align: top;
+}
+.example-page table.info th {
+  color: var(--ex-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 850px) {
+  .example-page > .page-header {
+    padding: 20px;
+  }
+  .example-page > .page-header p {
+    display: none;
+  }
+  .example-page main {
+    width: calc(100% - 28px);
+    margin: 14px;
+  }
+  .example-page .example-content {
+    padding: 14px;
+  }
+  .example-page .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   예제 메뉴 (모든 페이지 상단) · 목록 페이지 (index.html)
+   ========================================================================== */
+.example-page > .example-nav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 8px 28px;
+  background: var(--ex-panel);
+  border-bottom: 1px solid var(--ex-border);
+  font-size: 13px;
+}
+.example-page > .example-nav a {
+  flex: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: var(--ex-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.example-page > .example-nav a:hover {
+  background: var(--ex-bg);
+  color: var(--ex-text);
+}
+.example-page > .example-nav a[aria-current] {
+  background: var(--ex-accent-soft);
+  color: var(--ex-accent);
+  font-weight: 600;
+}
+.example-page > .example-nav a:focus-visible {
+  outline: 2px solid var(--ex-accent);
+  outline-offset: 2px;
+}
+.example-page .page-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.example-page a.page-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px;
+  background: var(--ex-panel);
+  border: 1px solid var(--ex-border);
+  border-radius: 12px;
+  box-shadow: 0 3px 12px #20304a05;
+  color: var(--ex-text);
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.example-page a.page-card:hover {
+  border-color: var(--ex-accent);
+  transform: translateY(-2px);
+}
+.example-page a.page-card strong {
+  font-size: 15px;
+}
+.example-page a.page-card span {
+  color: var(--ex-muted);
+  font-size: 13px;
+}
+.example-page a.page-card small {
+  margin-top: auto;
+  color: var(--ex-accent);
+  font-size: 12px;
+}
+@media (max-width: 850px) {
+  .example-page > .example-nav {
+    padding: 8px 14px;
+  }
+}

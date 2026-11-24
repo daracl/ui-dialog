@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>테마</title>
+  <link rel="stylesheet" href="./asset/examples.css" />
+  <style>
+    /* 색 재정의 예 : .brand 를 붙인 dialog 만 */
+    .daracl-dialog-wrapper.brand-scope {
+      --ddlg-btn-primary-bg: #365fe5;
+      --ddlg-btn-primary-border-color: #365fe5;
+      --ddlg-btn-primary-color: #ffffff;
+      --dui-panel-header-bg: #eef3ff;
+    }
+  </style>
+</head>
+
+<body class="example-page">
+  <header class="page-header">
+    <div><a href="./index.html">DaraDialog / UI 테스트</a>
+      <h1>테마</h1>
+    </div>
+    <div class="page-header-actions">테마 <select data-theme-select aria-label="테마"><option value="light">light</option><option value="dark">dark</option></select></div>
+  </header>
+
+  <main>
+    <section class="example-content">
+      <h2>전체 · dialog 별 테마</h2>
+      <p>오른쪽 위 선택 상자는 <code>&lt;html data-daracl-theme&gt;</code> 를 바꾼다. <code>theme</code> 옵션 / <code>setTheme()</code> 은 dialog 하나에만 적용된다. <code>theme-vars.css</code> 없이도 동작한다.</p>
+      <div class="actions">
+        <button type="button" class="primary" id="follow">상위 테마를 따르는 dialog</button>
+        <button type="button" id="dark">theme: "dark"</button>
+        <button type="button" id="light">theme: "light"</button>
+        <button type="button" id="brand">CSS 변수 재정의</button>
+      </div>
+    </section>
+
+    <section class="example-content">
+      <h2>dialog 전용 변수</h2>
+      <table class="info">
+        <thead>
+          <tr><th>변수</th><th>용도</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>--ddlg-overlay-bg</code> · <code>--ddlg-overlay-opacity</code></td><td>모달 배경</td></tr>
+          <tr><td><code>--ddlg-btn-{primary|secondary|info|success|warning|danger}-{bg|border-color|color}</code></td><td>하단 버튼</td></tr>
+          <tr><td><code>--dui-*</code></td><td>공통 색 (@daracl/ui-style) : 본문 · 헤더 · 테두리 · 글자</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script type="module">
+    import Dialog from "/src/index.js";
+    import "./asset/page.js";
+
+    const open = (opts) => {
+      const d = Dialog.create({
+        width: 420,
+        height: 220,
+        isModal: true,
+        icon: "info",
+        ...opts,
+        buttons: [
+          { label: "light", styleClass: "primary", callback: () => d.setTheme("light") },
+          { label: "dark", styleClass: "info", callback: () => d.setTheme("dark") },
+          { label: "해제", styleClass: "secondary", callback: () => d.setTheme() },
+          { label: "닫기", styleClass: "danger", callback: () => d.destroy() },
+        ],
+      });
+      return d;
+    };
+
+    document.getElementById("follow").addEventListener("click", () => open({ title: "상위 테마를 따름", template: "<p>오른쪽 위 테마를 바꾸면 함께 바뀐다.</p>" }));
+    document.getElementById("dark").addEventListener("click", () => open({ title: 'theme: "dark"', theme: "dark", template: "<p>이 dialog 만 dark.</p>" }));
+    document.getElementById("light").addEventListener("click", () => open({ title: 'theme: "light"', theme: "light", template: "<p>이 dialog 만 light.</p>" }));
+    document.getElementById("brand").addEventListener("click", () => {
+      const d = open({ title: "CSS 변수 재정의", template: "<p><code>--ddlg-btn-primary-*</code> 와 <code>--dui-panel-header-bg</code> 를 바꾼 예.</p>" });
+      d.dialogWrapperElement.classList.add("brand-scope");
+    });
+  </script>
+</body>
+
+</html>

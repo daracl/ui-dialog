@@ -4,6 +4,26 @@
 @use "@daracl/ui-style/themes" as themes;
 @use "@daracl/ui-style/base" as base;
 @use "_icon" as icon;
+@use "./themes" as theme;
+
+// ==========================================================================
+// Theme (ui-grid 와 같은 구조)
+// ==========================================================================
+// 공통 색상(--dui-*) 기본값. 특이도 0(:where)으로 출력하므로 앱이 theme-vars.css 를 로드하지 않아도
+// light / OS 다크 / data-daracl-theme 전환이 동작하고, 앱이 theme-vars.css 를 로드하거나 :root 에 값을 지정하면 그 값이 이긴다.
+// dialog 하나만 다른 테마로 표시하려면 theme 옵션 또는 setTheme() 을 쓴다. (.daracl-dialog-wrapper 에 data-daracl-theme 지정)
+$default-theme: theme.$default-theme;
+
+@include themes.define-theme-defaults($default: $default-theme);
+
+// dialog 전용 값(--ddlg-*) : 전역 테마(data-daracl-theme)와 dialog 별 테마([data-daracl-theme] 가 붙은 wrapper / overlay) 모두 처리한다.
+// $auto-dark : 공통 색상(--dui-*)이 OS 다크 설정을 따르므로 dialog 전용 값도 같이 따르게 한다. (ui-grid 는 지정하지 않음)
+@include themes.define-themes(".daracl-dialog-wrapper, .daracl-dialog-overlay", $default: $default-theme, $auto-dark: true, $prefix: "ddlg", $themes: theme.$themes);
+
+// dialog 전용 변수 참조 : var(--ddlg-키, light값)
+@function ddlg($name) {
+  @return themes.themed($name, $prefix: "ddlg", $themes: theme.$themes);
+}
 
 .daracl-dialog-hidden {
   visibility: visible;
@@ -13,8 +33,8 @@
 }
 
 .daracl-dialog-overlay {
-  background: #aaaaaa;
-  opacity: 0.3; 
+  background: ddlg(overlay-bg);
+  opacity: ddlg(overlay-opacity);
   position: fixed;
   top: 0;
   left: 0;
@@ -37,6 +57,10 @@
 
   &.hide {
     display: none;
+  }
+
+  &:focus {
+    outline: none;
   }
 
   &.transform-disable {
@@ -263,42 +287,52 @@
       padding: 3px 5px;
       margin-right: 10px;
       cursor: pointer;
+      color: themes.themed(font-color);
+      display: inline-block;
 
       &.primary {
-        background-color: #cce5ff;
-        border-color: #b8daff;
-        color: #ffffff; // var(--light)
+        background-color: ddlg(btn-primary-bg);
+        border-color: ddlg(btn-primary-border-color);
+        color: ddlg(btn-primary-color);
       }
 
       &.secondary {
-        background-color: #e2e3e5;
-        border-color: #d6d8db;
-        color: #ffffff; // var(--light)
+        background-color: ddlg(btn-secondary-bg);
+        border-color: ddlg(btn-secondary-border-color);
+        color: ddlg(btn-secondary-color);
       }
 
       &.info {
-        background-color: #d1ecf1;
-        border-color: #bee5eb;
-        color: #155724; // var(--dark)
+        background-color: ddlg(btn-info-bg);
+        border-color: ddlg(btn-info-border-color);
+        color: ddlg(btn-info-color);
       }
 
       &.success {
-        background-color: #d4edda;
-        border-color: #c3e6cb;
-        color: #155724; // var(--dark)
+        background-color: ddlg(btn-success-bg);
+        border-color: ddlg(btn-success-border-color);
+        color: ddlg(btn-success-color);
       }
 
       &.warning {
-        background-color: #fff3cd;
-        border-color: #ffeeba;
-        color: #155724; // var(--dark)
+        background-color: ddlg(btn-warning-bg);
+        border-color: ddlg(btn-warning-border-color);
+        color: ddlg(btn-warning-color);
       }
 
       &.danger {
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
-        color: #ffffff; // var(--light)
+        background-color: ddlg(btn-danger-bg);
+        border-color: ddlg(btn-danger-border-color);
+        color: ddlg(btn-danger-color);
       }
+    }
+
+    // 키보드 포커스 표시 (span 버튼은 tabindex 로 포커스를 받는다)
+    .dialog-btn:focus-visible,
+    .dialog-maximise:focus-visible,
+    .dialog-close:focus-visible {
+      outline: 2px solid themes.themed(selected-border-color);
+      outline-offset: 1px;
     }
 
     &.hide {

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>모달 · 중첩 · 포커스</title>
+  <link rel="stylesheet" href="./asset/examples.css" />
+</head>
+
+<body class="example-page">
+  <header class="page-header">
+    <div><a href="./index.html">DaraDialog / UI 테스트</a>
+      <h1>모달 · 중첩 · 포커스</h1>
+    </div>
+    <div class="page-header-actions">테마 <select data-theme-select aria-label="테마"><option value="light">light</option><option value="dark">dark</option></select></div>
+  </header>
+
+  <main>
+    <section class="example-content">
+      <h2>중첩 모달</h2>
+      <p>나중에 연 dialog 가 위에 쌓인다. 모달은 Tab 이 안에서만 순환하고, ESC 는 포커스가 있는 위쪽 dialog 만 닫으며, 닫히면 열기 전 요소로 포커스가 돌아간다.</p>
+      <div class="actions">
+        <button type="button" class="primary" id="nested">중첩 모달 열기</button>
+      </div>
+    </section>
+
+    <section class="example-content">
+      <h2>쌓임 순서</h2>
+      <p>먼저 만든 A 를 다시 열면 B 보다 위로 올라온다. (0.0.7 은 생성 순서로 고정)</p>
+      <div class="actions">
+        <button type="button" id="openA">A 열기</button>
+        <button type="button" id="openB">B 열기</button>
+      </div>
+    </section>
+
+    <section class="example-content">
+      <div class="panel-title">포커스 · 상태 <button type="button" data-clear="log">지우기</button></div>
+      <pre class="log" id="log" role="status" aria-live="polite"></pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import Dialog from "/src/index.js";
+    import { createLog } from "./asset/page.js";
+
+    const log = createLog("log");
+    const describe = (el) => (el ? `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${el.className ? "." + String(el.className).split(" ")[0] : ""}` : "-");
+    document.addEventListener("focusin", (e) => log(`focus → ${describe(e.target)}`));
+
+    document.getElementById("nested").addEventListener("click", () => {
+      const outer = Dialog.create({
+        title: "바깥 모달",
+        isModal: true,
+        width: 460,
+        height: 260,
+        template: '<p>Tab 을 여러 번 눌러 보세요.</p><p><input id="outerInput" placeholder="바깥 입력"></p>',
+        buttons: [
+          {
+            label: "안쪽 모달 열기",
+            styleClass: "primary",
+            callback() {
+              const inner = Dialog.create({
+                title: "안쪽 모달",
+                isModal: true,
+                width: 360,
+                height: 200,
+                template: '<p><input id="innerInput" placeholder="안쪽 입력"></p><p>ESC 로 이 창만 닫힌다.</p>',
+                buttons: [{ label: "닫기", styleClass: "secondary", callback: () => inner.destroy() }],
+              });
+            },
+          },
+          { label: "닫기", styleClass: "secondary", callback: () => outer.destroy() },
+        ],
+      });
+    });
+
+    const make = (name, left) =>
+      Dialog.create({
+        title: `dialog ${name}`,
+        autoOpen: false,
+        width: 300,
+        height: 180,
+        template: `<p>${name}</p>`,
+        buttons: [{ label: "닫기", styleClass: "secondary", callback: () => dlg[name].hide() }],
+        afterOpen(el) {
+          el.classList.add("transform-disable");
+          el.style.left = left;
+          el.style.top = "40%";
+          log(`${name} z-index = ${el.style.zIndex}`);
+        },
+      });
+    const dlg = { A: make("A", "30%"), B: make("B", "40%") };
+    document.getElementById("openA").addEventListener("click", () => (dlg.A.isOpen() ? (dlg.A.hide(), dlg.A.show()) : dlg.A.show()));
+    document.getElementById("openB").addEventListener("click", () => (dlg.B.isOpen() ? (dlg.B.hide(), dlg.B.show()) : dlg.B.show()));
+  </script>
+</body>
+
+</html>

@@ -1,57 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="X-UA-compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dialog Notification - Darainfo</title>
+  <!-- 빌드 결과(dist)를 쓰는 정적 예제. 저장소 루트를 웹 서버로 열고 /example/index.html 로 접근한다. (npm run build 필요) -->
+  <link rel="stylesheet" href="../uitest/asset/examples.css">
   <link rel="stylesheet" href="../dist/daracl.dialog.min.css">
   <script src="../dist/daracl.dialog.js"></script>
-
-
 </head>
 
-<body onload="dialogView()">
-
-  <div style="padding-top:80px;">
-    <div class="dialog-button">
-      <button type="button" onclick="dialogEvent('show')">Show</button>
-      <button type="button" onclick="dialogEvent('max')">Max</button>
+<body class="example-page">
+  <header class="page-header">
+    <div><a href="../uitest/index.html">DaraDialog / 빌드 예제 (dist)</a>
+      <h1>Dialog Notification</h1>
     </div>
-  </div>
+    <div class="page-header-actions">테마
+      <select id="theme" aria-label="테마">
+        <option value="light">light</option>
+        <option value="dark">dark</option>
+      </select>
+    </div>
+  </header>
 
-  <div id="content"></div>
-</body>
+  <main>
+    <section class="example-content">
+      <h2>UMD 사용</h2>
+      <p><code>&lt;script src="dist/daracl.dialog.js"&gt;</code> 를 불러오면 <code>Daracl.dialog</code> 전역으로 쓸 수 있다. <code>@daracl/core</code> 가 포함되어 있어 다른 스크립트가 필요 없다.</p>
+      <div class="actions">
+        <button type="button" class="primary" onclick="dialogEvent('show')">Show</button>
+        <button type="button" onclick="dialogEvent('max')">Max</button>
+        <button type="button" onclick="dialogEvent('nested')">Nested modal</button>
+        <button type="button" onclick="dialogEvent('sanitize')">Sanitize</button>
+      </div>
+    </section>
 
-</html>
+    <section class="example-content">
+      <div class="panel-title">코드</div>
+      <pre class="code">var dialogObj = Daracl.dialog.create({
+  title: 'dialog', width: 500, height: 'auto', icon: 'info', isModal: true, resizable: true, autoOpen: false,
+  template: '&lt;a href="https://varsql.com" target="_blank"&gt;링크 이동&lt;/a&gt;',
+  buttons: [
+    { label: 'ok', styleClass: 'info', callback: function (e) { … } },
+    { label: 'Cancel', callback: function (e) { dialogObj.hide(); } }
+  ]
+});
+dialogObj.show();</pre>
+    </section>
 
-<style>
-  .dialog-button button {
-    border: none;
-    outline: none;
-    cursor: pointer;
-    margin: 0 5px;
-    font-size: 1.2rem;
-    padding: 10px 20px;
-    border-radius: 4px;
-  }
-</style>
+    <section class="example-content">
+      <div class="panel-title">이벤트 <button type="button" onclick="document.getElementById('log').textContent = ''">지우기</button></div>
+      <pre class="log" id="log" role="status" aria-live="polite"></pre>
+    </section>
+  </main>
 
-<script>
-  var htmlStr = [];
-  for (var i = 0; i < 1000; i++) {
-    htmlStr.push(' <h2>dialog message</h2>');
-  }
+  <script>
+    // UMD 는 window.Daracl.dialog 로 등록된다. (0.0.7 예제의 new Dialog(...) 는 전역 Dialog 가 없어 동작하지 않았다)
+    function log(msg) {
+      var el = document.getElementById('log');
+      el.textContent += '[' + new Date().toTimeString().slice(0, 8) + '] ' + msg + '\n';
+    }
 
-  //document.getElementById("content").innerHTML = htmlStr.join('');
-  var dialogObj;
-  function dialogView() {
-    dialogObj = new Dialog({
-      title: 'dialog', width: 500, height: 'auto', icon: "info", isModal: true, resizable: true, template: '<a href="https://varsql.com" target="_blank">링크 이동</a>', buttons: [
+    var themeSelect = document.getElementById('theme');
+    themeSelect.addEventListener('change', function () {
+      document.documentElement.setAttribute('data-daracl-theme', themeSelect.value);
+    });
+    document.documentElement.setAttribute('data-daracl-theme', themeSelect.value);
+
+    var dialogObj = Daracl.dialog.create({
+      title: 'dialog', width: 500, height: 'auto', icon: "info", isModal: true, resizable: true, autoOpen: false, template: '<a href="https://varsql.com" target="_blank">링크 이동</a>', buttons: [
         {
           label: 'ok', styleClass: "info", callback: function (e) {
-            alert('ok')
+            log('ok callback');
           }
         }
         , {
@@ -59,42 +80,59 @@
             dialogObj.hide();
           }
         }
-      ]
+      ], afterOpen: function () {
+        log('afterOpen');
+      }
     });
 
-    return;
-
-    new Dialog({
-      title: 'dialog2222', width: 200, height: '150px', template: 'https://www.naver.com', buttons: [
-        {
-          label: 'close', styleClass: "info", callback: function (e) {
-            alert('11')
-            console.log(e)
-          }
-        }
-        , {
-          label: 'Cancel', callback: function (e) {
-            alert('22')
-            console.log(e)
-          }
-        }
-      ]
-    });
-  }
-
-  function dialogEvent(mode) {
-    switch (mode) {
-      case 'show':
-        dialogObj.show()
-        break;
-      case 'max':
-        dialogObj.maximise()
-        break;
-
-      default:
-        break;
+    function nestedDialog() {
+      var outer = Daracl.dialog.create({
+        title: 'outer modal', isModal: true, template: '<p>Tab 은 이 창 안에서만 이동하고 ESC 로 닫힙니다.</p><input placeholder="입력">',
+        buttons: [
+          {
+            label: 'open inner', styleClass: 'primary', callback: function () {
+              var inner = Daracl.dialog.create({
+                title: 'inner modal', isModal: true, width: 300, height: 200, template: '<input placeholder="inner">',
+                buttons: [{ label: 'close', callback: function () { inner.destroy(); } }]
+              });
+            }
+          },
+          { label: 'close', callback: function () { outer.destroy(); } }
+        ]
+      });
     }
-  }
 
+    function sanitizeDialog() {
+      // title · button label 은 @daracl/core sanitizeHtml 로 정리된다. (onerror 는 제거되고 <b> 는 남는다)
+      // template 은 기본적으로 신뢰된 HTML 이며, 외부 값을 넣을 때는 sanitize: true 를 지정한다.
+      var userInput = '<img src=x onerror="log(\'xss\')"><b>외부 입력</b>';
+      var d = Daracl.dialog.create({
+        title: userInput, sanitize: true, template: userInput,
+        buttons: [{ label: userInput, styleClass: 'warning', callback: function () { d.destroy(); } }]
+      });
+      log('onerror 속성 수 : ' + d.dialogWrapperElement.querySelectorAll('[onerror]').length);
+    }
 
-</script>
+    function dialogEvent(mode) {
+      switch (mode) {
+        case 'show':
+          dialogObj.show();
+          break;
+        case 'max':
+          dialogObj.maximise();
+          break;
+        case 'nested':
+          nestedDialog();
+          break;
+        case 'sanitize':
+          sanitizeDialog();
+          break;
+
+        default:
+          break;
+      }
+    }
+  </script>
+</body>
+
+</html>

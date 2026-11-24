@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>기본 사용 · 메서드</title>
+  <link rel="stylesheet" href="./asset/examples.css" />
+</head>
+
+<body class="example-page">
+  <header class="page-header">
+    <div><a href="./index.html">DaraDialog / UI 테스트</a>
+      <h1>기본 사용 · 메서드</h1>
+    </div>
+    <div class="page-header-actions">테마 <select data-theme-select aria-label="테마"><option value="light">light</option><option value="dark">dark</option></select></div>
+  </header>
+
+  <main>
+    <section class="example-content">
+      <h2>README 예제</h2>
+      <p><code>autoOpen: false</code> 로 만든 dialog 를 메서드로 제어한다. 링크 · 입력 · 버튼이 있는 본문, info 아이콘, 모달, 크기 조절.</p>
+      <div class="actions">
+        <button type="button" class="primary" data-call="show">show()</button>
+        <button type="button" data-call="hide">hide()</button>
+        <button type="button" data-call="maximise">maximise()</button>
+        <button type="button" data-call="state">isOpen() · isMaximise()</button>
+      </div>
+    </section>
+
+    <section class="example-content">
+      <h2>아이콘</h2>
+      <p><code>icon</code> 옵션은 본문 왼쪽에 아이콘을 표시한다.</p>
+      <div class="actions" id="icons"></div>
+    </section>
+
+    <section class="example-content">
+      <h2>간단한 형태</h2>
+      <p>문자열만 넘기면 본문으로 표시한다. <code>enableHeader</code> · <code>enableFooter</code> 로 영역을 숨길 수 있다.</p>
+      <div class="actions">
+        <button type="button" id="string">Dialog.create("문자열")</button>
+        <button type="button" id="bare">헤더 · 하단 없음 (ESC 로 닫기)</button>
+      </div>
+    </section>
+
+    <section class="example-content">
+      <div class="panel-title">이벤트 <button type="button" data-clear="log">지우기</button></div>
+      <pre class="log" id="log" role="status" aria-live="polite"></pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import Dialog from "/src/index.js";
+    import { createLog } from "./asset/page.js";
+
+    const log = createLog("log");
+
+    const dialogObj = Dialog.create({
+      title: "dialog",
+      width: 500,
+      height: "auto",
+      icon: "info",
+      isModal: true,
+      resizable: true,
+      autoOpen: false,
+      template: '<p><a href="https://varsql.com" target="_blank">링크 이동</a></p><p><input placeholder="입력해 보세요"></p>',
+      buttons: [
+        { label: "ok", styleClass: "info", callback: () => log("ok callback") },
+        { label: "Cancel", callback: () => dialogObj.hide() },
+      ],
+      afterOpen() {
+        log("afterOpen");
+      },
+    });
+
+    document.querySelectorAll("[data-call]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const name = btn.dataset.call;
+        if (name === "state") return log(`isOpen=${dialogObj.isOpen()} · isMaximise=${dialogObj.isMaximise()}`);
+        dialogObj[name]();
+        log(`${name}()`);
+      })
+    );
+
+    const icons = document.getElementById("icons");
+    ["primary", "info", "success", "warning", "danger"].forEach((icon) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = icon;
+      btn.addEventListener("click", () => {
+        const d = Dialog.create({ title: `icon : ${icon}`, icon, width: 360, height: 200, template: `<p>${icon} 메시지</p>`, buttons: [{ label: "확인", styleClass: icon, callback: () => d.destroy() }] });
+      });
+      icons.appendChild(btn);
+    });
+
+    document.getElementById("string").addEventListener("click", () => Dialog.create("문자열만 전달한 dialog 입니다."));
+    document.getElementById("bare").addEventListener("click", () => {
+      Dialog.create({ enableHeader: false, enableFooter: false, width: 320, height: 140, template: "<p>헤더와 하단이 없는 dialog. ESC 로 닫는다.</p>" });
+    });
+  </script>
+</body>
+
+</html>

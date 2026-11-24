@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>종합 데모 · 옵션 빌더</title>
+  <link rel="stylesheet" href="./asset/examples.css" />
+</head>
+
+<body class="example-page">
+  <header class="page-header">
+    <div><a href="./index.html">DaraDialog / UI 테스트</a>
+      <h1>종합 데모 · 옵션 빌더</h1>
+    </div>
+    <div class="page-header-actions">테마 <select data-theme-select aria-label="테마"><option value="light">light</option><option value="dark">dark</option></select></div>
+  </header>
+
+  <main>
+    <section class="example-content" aria-labelledby="optionsTitle">
+      <h2 id="optionsTitle">옵션</h2>
+      <p>옵션을 바꾸고 <strong>열기</strong>를 누르면 그 설정으로 dialog 를 만든다. 아래에 같은 결과를 내는 코드가 표시된다.</p>
+
+      <form id="options" onsubmit="return false">
+        <div class="option-grid">
+          <label class="field">title <input name="title" value="사용자 정보" /></label>
+          <label class="field">width <input name="width" value="480" /></label>
+          <label class="field">height <input name="height" value="auto" /></label>
+          <label class="field">icon
+            <select name="icon">
+              <option value="">(없음)</option>
+              <option>primary</option>
+              <option selected>info</option>
+              <option>success</option>
+              <option>warning</option>
+              <option>danger</option>
+            </select>
+          </label>
+          <label class="field">theme (dialog 별)
+            <select name="theme">
+              <option value="">(상위 요소를 따름)</option>
+              <option>light</option>
+              <option>dark</option>
+            </select>
+          </label>
+          <label class="field">sanitize
+            <select name="sanitize">
+              <option value="">(기본) title · label 만</option>
+              <option value="true">true : template 포함</option>
+              <option value="false">false : 정리 안 함</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="option-checks">
+          <label><input type="checkbox" name="isModal" checked /> 모달 <code>isModal</code></label>
+          <label><input type="checkbox" name="draggable" checked /> 이동 <code>draggable</code></label>
+          <label><input type="checkbox" name="resizable" checked /> 크기 조절 <code>resizable</code></label>
+          <label><input type="checkbox" name="enableHeader" checked /> 헤더 <code>enableHeader</code></label>
+          <label><input type="checkbox" name="enableFooter" checked /> 하단 버튼 <code>enableFooter</code></label>
+          <label><input type="checkbox" name="enableMaxButton" checked /> 최대화 버튼 <code>enableMaxButton</code></label>
+          <label><input type="checkbox" name="enableCloseButton" checked /> 닫기 버튼 <code>enableCloseButton</code></label>
+          <label><input type="checkbox" name="closeOnEscape" checked /> ESC 닫기 <code>closeOnEscape</code></label>
+          <label><input type="checkbox" name="autoFocus" checked /> 포커스 이동 <code>autoFocus</code></label>
+          <label><input type="checkbox" name="dragOverflow" checked /> 창 밖 이동 <code>dragOverflow</code></label>
+        </div>
+
+        <label class="field" style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; margin-bottom: 16px">template
+          <textarea name="template" rows="4">&lt;p&gt;이름과 메일을 입력하세요.&lt;/p&gt;
+&lt;p&gt;&lt;input name="name" placeholder="이름"&gt; &lt;input name="mail" placeholder="메일"&gt;&lt;/p&gt;</textarea>
+        </label>
+
+        <div class="actions">
+          <button type="button" class="primary" id="open">열기</button>
+          <button type="button" id="destroyAll">모두 닫기 (destroy)</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="split">
+      <div class="example-content">
+        <div class="panel-title">코드</div>
+        <pre class="code" id="code"></pre>
+      </div>
+      <div class="example-content">
+        <div class="panel-title">이벤트 <button type="button" data-clear="log">지우기</button></div>
+        <pre class="log" id="log" role="status" aria-live="polite"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import Dialog from "/src/index.js";
+    import { createLog, showCode } from "./asset/page.js";
+
+    const log = createLog("log");
+    const form = document.getElementById("options");
+    const opened = [];
+
+    function readOptions() {
+      const f = form.elements;
+      const options = {
+        title: f.title.value,
+        width: f.width.value,
+        height: f.height.value,
+        icon: f.icon.value,
+        template: f.template.value,
+      };
+      ["isModal", "draggable", "resizable", "enableHeader", "enableFooter", "enableMaxButton", "enableCloseButton", "closeOnEscape", "autoFocus", "dragOverflow"].forEach((name) => (options[name] = f[name].checked));
+      if (f.theme.value) options.theme = f.theme.value;
+      if (f.sanitize.value) options.sanitize = f.sanitize.value === "true";
+      return options;
+    }
+
+    function render() {
+      const options = readOptions();
+      showCode(document.getElementById("code"), {
+        ...options,
+        buttons: [
+          { label: "저장", styleClass: "primary", callback: function save() {} },
+          { label: "취소", styleClass: "secondary", callback: function cancel() {} },
+        ],
+        afterOpen: function afterOpen() {},
+      });
+      return options;
+    }
+
+    form.addEventListener("input", render);
+    form.addEventListener("change", render);
+    render();
+
+    document.getElementById("open").addEventListener("click", () => {
+      const options = render();
+      const dlg = Dialog.create({
+        ...options,
+        buttons: [
+          {
+            label: "저장",
+            styleClass: "primary",
+            callback() {
+              const inputs = [...dlg.dialogWrapperElement.querySelectorAll(".dialog-content input")].map((i) => `${i.name}=${i.value}`);
+              log(`저장 : ${inputs.join(", ") || "(입력 없음)"}`);
+              dlg.destroy();
+            },
+          },
+          { label: "취소", styleClass: "secondary", callback: () => dlg.destroy() },
+        ],
+        afterOpen(el) {
+          log(`afterOpen : ${el.className.split(" ").find((c) => c.startsWith("dd-"))}`);
+        },
+      });
+      opened.push(dlg);
+    });
+
+    document.getElementById("destroyAll").addEventListener("click", () => {
+      opened.splice(0).forEach((d) => d.destroy());
+      log("모두 destroy");
+    });
+  </script>
+</body>
+
+</html>

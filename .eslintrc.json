@@ -1,0 +1,81 @@
+{
+  "root": true,
+  "extends": [
+    "eslint:recommended",
+    "prettier"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "env": {
+    "browser": true,
+    "es2022": true
+  },
+  "globals": {
+    "APP_VERSION": "readonly"
+  },
+  "rules": {
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ],
+    "no-var": "error",
+    "prefer-const": "warn",
+    "semi": [
+      "error",
+      "always"
+    ],
+    "quotes": [
+      "error",
+      "double",
+      {
+        "avoidEscape": true
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "test/**/*.js"
+      ],
+      "env": {
+        "jest": true,
+        "node": true
+      }
+    },
+    {
+      "files": [
+        "test/helpers/compileStyle.js",
+        "test/style.test.js"
+      ],
+      "parserOptions": {
+        "sourceType": "script"
+      },
+      "env": {
+        "node": true,
+        "browser": false
+      }
+    },
+    {
+      "files": [
+        "vite.common.mjs",
+        "vite.config.mjs",
+        "vite.config.umd.mjs",
+        "scripts/**/*.mjs"
+      ],
+      "parserOptions": {
+        "sourceType": "module"
+      },
+      "env": {
+        "node": true,
+        "browser": false
+      }
+    }
+  ]
+}

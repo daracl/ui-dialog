@@ -1,0 +1,51 @@
+# 품질 게이트 : build · typecheck · lint · test · 의존성 audit
+# 배포(publish-npm.yml)와 분리한다. 이 워크플로는 배포하지 않는다.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # package-lock.json 이 .gitignore 대상이라 npm ci 를 쓸 수 없다. (lockfile 을 추적하면 npm ci 로 바꾼다)
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit / integration / security tests
+        run: npx jest --runInBand --ci
+
+      - name: Build
+        run: npm run build
+
+      # 런타임 의존성(배포 패키지에 포함되는 것)의 high 이상 취약점은 실패로 처리한다.
+      - name: Dependency audit (runtime)
+        run: npm audit --omit=dev --audit-level=high
+
+      # 개발 도구 의존성은 보고만 한다. (결과는 docs/security/security-audit.md 참고)
+      - name: Dependency audit (all, report only)
+        run: npm audit || true

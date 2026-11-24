@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DaraDialog UI 예제 모음</title>
+  <link rel="stylesheet" href="./asset/examples.css" />
+</head>
+
+<body class="example-page">
+  <!-- npm run dev → http://127.0.0.1:5182/uitest/index.html . 예제는 src 를 직접 불러오므로 수정이 바로 반영된다. -->
+  <header class="page-header">
+    <div><a href="./index.html">DaraDialog / UI 테스트</a>
+      <h1>예제 모음</h1>
+    </div>
+    <div class="page-header-actions">테마 <select data-theme-select aria-label="테마"><option value="light">light</option><option value="dark">dark</option></select></div>
+  </header>
+
+  <main>
+    <section class="example-content">
+      <h2>@daracl/dialog</h2>
+      <p style="margin-bottom: 0">드래그 · 크기 조절 · 모달을 지원하는 dialog. 각 예제는 <code>src/</code> 를 직접 불러오는 풀페이지이며, 오른쪽 위 테마는 모든 예제에 함께 적용된다.</p>
+    </section>
+
+    <nav class="page-cards" id="pageCards" aria-label="예제 목록"></nav>
+  </main>
+
+  <script type="module" src="./asset/page.js"></script>
+</body>
+
+</html>

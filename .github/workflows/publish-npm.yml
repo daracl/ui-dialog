@@ -1,0 +1,119 @@
+# npm 자동 배포 (ui-grid .github/workflows/publish-npm.yml 기준)
+# main 에 push 하면 마지막 커밋과 직전 커밋의 package.json version 을 비교해 바뀐 경우에만
+# 설치 → lint → typecheck → test → build → npm publish 를 실행한다. 설정 방법은 docs/NPM_PUBLISH.md.
+# ui-grid 와 다른 점 : 이 저장소는 npm 프로젝트라 yarn 대신 npm 으로 설치 · 실행하고, lint · typecheck 단계를 더했다.
+name: Publish to npm
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-npm
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.version.outputs.changed }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Compare package versions with the previous commit
+        id: version
+        shell: bash
+        run: |
+          node <<'NODE'
+          const { execFileSync } = require('node:child_process');
+          const { appendFileSync, readFileSync } = require('node:fs');
+          const current = JSON.parse(readFileSync('package.json', 'utf8')).version;
+          const parents = execFileSync('git', ['rev-list', '--parents', '-n', '1', 'HEAD'], { encoding: 'utf8' }).trim().split(/\s+/);
+          if (parents.length === 1) {
+            console.log('No previous commit; skipping publication.');
+            appendFileSync(process.env.GITHUB_OUTPUT, 'changed=false\n');
+          } else {
+            const previous = JSON.parse(execFileSync('git', ['show', 'HEAD^:package.json'], { encoding: 'utf8' })).version;
+            if (typeof current !== 'string' || typeof previous !== 'string') {
+              throw new Error('package.json must contain a version string.');
+            }
+            const changed = current !== previous;
+            console.log(`Version: ${previous} -> ${current}; ${changed ? 'publish' : 'skip'}`);
+            appendFileSync(process.env.GITHUB_OUTPUT, `changed=${changed}\nversion=${current}\n`);
+          }
+          NODE
+
+  publish:
+    needs: version
+    if: needs.version.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # 기본값은 OIDC(Trusted Publishing). 호환되지 않는 환경에서만 저장소 변수 NPM_AUTH_MODE 를 token 으로 설정한다.
+      NPM_AUTH_MODE: ${{ vars.NPM_AUTH_MODE || 'oidc' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate authentication mode
+        shell: bash
+        run: |
+          case "$NPM_AUTH_MODE" in
+            oidc|token) ;;
+            *) echo 'NPM_AUTH_MODE must be oidc or token.' >&2; exit 1 ;;
+          esac
+      - name: Set up npm
+        run: |
+          npm install --global npm@11
+          node --version
+          npm --version
+      - name: Check that the version is not published yet
+        shell: bash
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          if npm view "@daracl/dialog@${VERSION}" version >/dev/null 2>&1; then
+            echo "@daracl/dialog@${VERSION} is already published." >&2
+            exit 1
+          fi
+      - name: Install dependencies
+        # package-lock.json 이 .gitignore 대상이라 npm ci 를 쓸 수 없다. lockfile 을 추적하면 npm ci 로 바꾼다.
+        run: npm install --no-audit --no-fund
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Test
+        run: npx jest --runInBand --ci
+      - name: Build
+        run: npm run build
+      - name: Publish with Trusted Publishing
+        if: env.NPM_AUTH_MODE == 'oidc'
+        # prepack 의 중복 빌드를 생략한다. 위에서 테스트와 빌드를 완료했다.
+        run: npm publish --access public --ignore-scripts
+      - name: Publish with npm token
+        if: env.NPM_AUTH_MODE == 'token'
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo 'NPM_TOKEN secret is required for token authentication.' >&2
+            exit 1
+          fi
+          printf '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n' > "$RUNNER_TEMP/npm-publish.npmrc"
+          NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/npm-publish.npmrc" npm publish --access public --ignore-scripts
