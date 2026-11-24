@@ -1,0 +1,27 @@
+// ui-dialog 전용 색상 (light). 공통 색상(border-color, font-color, body-bg ...)은 @daracl/ui-style 의 테마 변수(--dui-*)를 사용한다.
+// 여기 값은 --ddlg-* 변수로 출력된다.
+$theme: (
+  // 모달 overlay (0.0.7 값 유지)
+  overlay-bg: #aaaaaa,
+  overlay-opacity: 0.3,
+  // 하단 버튼. 배경 · 테두리는 0.0.7 값 유지.
+  // 글자색은 대비 개선 : primary / secondary / danger 가 흰 글자(대비 1.2~1.4:1)여서 같은 계열의 진한 색으로 바꿨다. (7:1 이상)
+  btn-primary-bg: #cce5ff,
+  btn-primary-border-color: #b8daff,
+  btn-primary-color: #004085,
+  btn-secondary-bg: #e2e3e5,
+  btn-secondary-border-color: #d6d8db,
+  btn-secondary-color: #383d41,
+  btn-info-bg: #d1ecf1,
+  btn-info-border-color: #bee5eb,
+  btn-info-color: #0c5460,
+  btn-success-bg: #d4edda,
+  btn-success-border-color: #c3e6cb,
+  btn-success-color: #155724,
+  btn-warning-bg: #fff3cd,
+  btn-warning-border-color: #ffeeba,
+  btn-warning-color: #856404,
+  btn-danger-bg: #f8d7da,
+  btn-danger-border-color: #f5c6cb,
+  btn-danger-color: #721c24,
+);

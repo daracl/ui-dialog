@@ -1,0 +1,24 @@
+// ui-dialog 전용 색상 (dark). 공통 색상은 @daracl/ui-style 의 테마 변수(--dui-*)를 사용한다.
+// dark 값은 새로 정한 "파생" 값이다 (0.0.7 에는 dark 가 없었다). 화면에서 확인이 필요하다.
+$theme: (
+  overlay-bg: #000000,
+  overlay-opacity: 0.5,
+  btn-primary-bg: #1c3d5e,
+  btn-primary-border-color: #2b5a8a,
+  btn-primary-color: #cfe2ff,
+  btn-secondary-bg: #3a3b3d,
+  btn-secondary-border-color: #4a4c4f,
+  btn-secondary-color: #e2e3e5,
+  btn-info-bg: #12414a,
+  btn-info-border-color: #1b5c69,
+  btn-info-color: #b6effb,
+  btn-success-bg: #1e4a2b,
+  btn-success-border-color: #2b6a3d,
+  btn-success-color: #c3e6cb,
+  btn-warning-bg: #5c4a13,
+  btn-warning-border-color: #7a6420,
+  btn-warning-color: #ffe69c,
+  btn-danger-bg: #5c1f25,
+  btn-danger-border-color: #842029,
+  btn-danger-color: #f5c2c7,
+);

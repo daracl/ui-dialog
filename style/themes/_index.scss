@@ -1,0 +1,11 @@
+@use 'light';
+@use 'dark';
+
+// ui-dialog 전용 테마 값(--ddlg-*). 테마 추가시 아래에 추가할 것. (공통 테마는 @daracl/ui-style/themes 에서 관리)
+$themes: (
+  light: light.$theme,
+  dark: dark.$theme,
+);
+
+// 기본 테마 설정
+$default-theme: light;

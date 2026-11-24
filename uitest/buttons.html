@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>하단 버튼 · 키보드</title>
+  <link rel="stylesheet" href="./asset/examples.css" />
+</head>
+
+<body class="example-page">
+  <header class="page-header">
+    <div><a href="./index.html">DaraDialog / UI 테스트</a>
+      <h1>하단 버튼 · 키보드</h1>
+    </div>
+    <div class="page-header-actions">테마 <select data-theme-select aria-label="테마"><option value="light">light</option><option value="dark">dark</option></select></div>
+  </header>
+
+  <main>
+    <section class="example-content">
+      <h2>버튼 스타일</h2>
+      <p><code>buttons[].styleClass</code> 6종. 색은 <code>--ddlg-btn-*</code> 변수이며 dark 테마에서 함께 바뀐다.</p>
+      <div class="actions">
+        <button type="button" class="primary" id="all">6종 버튼 dialog 열기</button>
+      </div>
+    </section>
+
+    <section class="example-content">
+      <h2>키보드</h2>
+      <table class="info">
+        <thead>
+          <tr><th>키</th><th>동작</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Tab</code> / <code>Shift+Tab</code></td><td>최대화 · 닫기 · 본문 · 하단 버튼 순으로 이동 (모달은 dialog 안에서 순환)</td></tr>
+          <tr><td><code>Enter</code> / <code>Space</code></td><td>포커스된 버튼 실행 (마우스는 mousedown)</td></tr>
+          <tr><td><code>Esc</code></td><td>닫기 (<code>closeOnEscape</code>, 닫기 버튼이 있을 때)</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="example-content">
+      <div class="panel-title">callback <button type="button" data-clear="log">지우기</button></div>
+      <pre class="log" id="log" role="status" aria-live="polite"></pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import Dialog from "/src/index.js";
+    import { createLog } from "./asset/page.js";
+
+    const log = createLog("log");
+
+    document.getElementById("all").addEventListener("click", () => {
+      const styles = ["primary", "secondary", "info", "success", "warning", "danger"];
+      const d = Dialog.create({
+        title: "버튼 스타일",
+        width: 640,
+        height: 220,
+        template: "<p>버튼을 마우스로 누르거나, Tab 으로 이동해 Enter / Space 를 눌러 보세요.</p>",
+        buttons: [
+          ...styles.map((styleClass) => ({ label: styleClass, styleClass, callback: (e) => log(`${styleClass} (${e.type}${e.key ? " " + JSON.stringify(e.key) : ""})`) })),
+          { label: "닫기", styleClass: "secondary", callback: () => d.destroy() },
+        ],
+      });
+    });
+  </script>
+</body>
+
+</html>

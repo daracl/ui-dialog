@@ -11,9 +11,9 @@
 
 ## 프로젝트 개요
 
-- 패키지 `@daracl/dialog` v0.0.7 · 빌드 webpack · 패키지 관리자 npm
-- 디렉터리: `src/`, `style/`, `example/`, `types/`
-- 같은 Daracl 프로젝트 의존: 없음
+- 패키지 `@daracl/dialog` v0.0.7 · 빌드 vite (ui-grid 구조) · 패키지 관리자 npm
+- 디렉터리: `src/`, `style/`, `test/`, `uitest/`, `example/`, `types/`, `scripts/`
+- 같은 Daracl 프로젝트 의존: `@daracl/core` (`../corejs`, `@daracl/core/utils` 의 `sanitizeHtml` · `isSafeUrl`), `@daracl/ui-style`
 - git: 이 폴더는 **독립된 저장소**다 (main 브랜치). 다른 `ui-*` 프로젝트와 저장소가 다르다.
 
 ## 명령어
@@ -22,10 +22,13 @@
 | --- | --- |
 | `npm run build` | 배포용 전체 빌드 |
 | `npm run build:tsc` | 타입 선언(.d.ts) 생성 |
-| `npm run test` | 단위 / 통합 테스트 |
-| `npm run start` | 개발 서버 (webpack) |
+| `npm run test` | 단위 / 통합 테스트 (jest + jsdom, `test/`) |
+| `npm run lint` | ESLint (`src`, `test`, `scripts`, vite 설정) |
+| `npm run typecheck` | JSDoc 기반 타입 검사 (`tsconfig.typecheck.json`) |
+| `npm run dev` (= `start`) | vite 개발 서버 `127.0.0.1:5182/uitest/index.html` |
 
-- webpack(`build:prod`)과 esbuild(`build:js`, `node build.js`) 두 경로로 번들을 만든다.
+- `build` = `build:escjs`(vite.config.mjs, ESM/CJS) → `build:umd`(vite.config.umd.mjs, UMD) → `mergenclean`(dist/unmin 병합 → d.ts → 기존 파일 이름 복사). 공통 설정은 `vite.common.mjs`.
+- 기존 공개 파일 이름 `dist/daracl.dialog(.min).js`, `dist/index.css` 는 `scripts/build-files.mjs legacy` 가 만든다. 지우지 않는다 (CDN 호환).
 
 ## 코드 스타일
 
@@ -35,9 +38,9 @@
 
 ## 스타일(SCSS)
 
-- 진입 파일: `style/daracl.dialog.scss` (SCSS 2개)
+- 진입 파일: `style/daracl.dialog.scss` (+ `_icon.scss`, `themes/`)
 - 공통 색상 · 간격 · z-index 는 `@daracl/ui-style` 을 사용한다 (현재 `^0.0.1`). 컴포넌트 색은 `themes.themed(키)` → `var(--dui-키, light값)`.
-- 클래스 접두사 `daracl-dialog`, 이 프로젝트 전용 CSS 변수 접두사 `없음`, keyframes `ddlg-fade-in / ddlg-fade-out, daradialogHide`.
+- 클래스 접두사 `daracl-dialog`, 이 프로젝트 전용 CSS 변수 접두사 `--ddlg-*`, keyframes `ddlg-fade-in / ddlg-fade-out, daradialogHide`.
 - 이 프로젝트에서만 쓰는 값은 자기 접두사 변수로 두고, 접두사 없는 CSS 변수(`--border-color` 등)를 선언하지 않는다. 컴포넌트 루트에서 `--dui-*` 를 다시 선언하지 않는다 (앱의 테마 값을 덮어쓴다).
 - hover / selected / active 는 `*-bg` 와 `*-color` 를 **쌍으로** 쓴다. 입력 요소 · 버튼 테두리는 `input-border-color`, 패널 · 표 · 탭은 `border-color`.
 - 테마 전환은 `data-daracl-theme` 속성과 OS 설정뿐이다. `body.dark` 같은 클래스 방식을 추가하지 않는다. dark 는 앱이 `@daracl/ui-style/theme-vars.css` 를 로드해야 동작한다.
@@ -58,4 +61,14 @@
 
 <!-- ui-common-harness:custom-start -->
 (여기에 이 프로젝트에만 해당하는 규칙을 적는다. 이 구역은 하네스를 다시 적용해도 유지된다.)
+
+- **HTML 처리**: DOM 은 `createElement` 로 만든다. 문자열 HTML 은 `Dialog#appendHtml` 한 곳에서만 넣고(`test/source-guard.test.js` 가 검사), title · 버튼 label 은 `@daracl/core/utils` 의 `sanitizeHtml`, url 은 `isSafeUrl` 을 거친다. template 은 신뢰된 HTML 이 기본이며 `sanitize` 옵션으로 바꾼다 (README "HTML 보안").
+- **의존성**: ui-grid 기준. 런타임 `dependencies` 는 `@daracl/core`, `@daracl/ui-style` 만. ESM/CJS(vite.config.mjs)는 core 를 external, UMD(vite.config.umd.mjs)는 번들.
+- **테마**: ui-grid 구조. 전용 값은 `style/themes/_light.scss` · `_dark.scss` 에 추가하고 `ddlg(키)` 로 참조한다. dialog 별 테마는 `theme` 옵션 / `setTheme()` (wrapper · overlay 의 `data-daracl-theme`).
+- **수명주기**: 리스너는 `addEvent`(→ `eventList`), 지연 실행은 `setTimer`(→ `timerSet`)로 등록해야 `destroy()` 에서 정리된다.
+- `package.json` 의 `sideEffects` 를 `false` 로 되돌리지 않는다. 번들러가 스타일 import 를 제거할 수 있다 (0.0.7 의 webpack 빌드에서 실제로 CSS 가 생성되지 않았다).
+- `babel.config.js` 는 jest(babel-jest) 전용이다. 빌드는 babel 을 쓰지 않는다.
+- 빌드 대상: ESM/CJS 는 vite 기본값, UMD 는 `es2017`. IE 11 은 지원하지 않는다.
+- 추적되는 `style/daracl.dialog(.min).css(.map)` 은 2024-10 생성물로 현재 SCSS 와 다르다. 직접 수정하지 않는다.
+- 분석 · 보안 · 테스트 기록: `docs/`.
 <!-- ui-common-harness:custom-end -->

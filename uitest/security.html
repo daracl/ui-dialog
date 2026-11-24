@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HTML 보안 (sanitize · url)</title>
+  <link rel="stylesheet" href="./asset/examples.css" />
+</head>
+
+<body class="example-page">
+  <header class="page-header">
+    <div><a href="./index.html">DaraDialog / UI 테스트</a>
+      <h1>HTML 보안 (sanitize · url)</h1>
+    </div>
+    <div class="page-header-actions">테마 <select data-theme-select aria-label="테마"><option value="light">light</option><option value="dark">dark</option></select></div>
+  </header>
+
+  <main>
+    <section class="example-content">
+      <h2>sanitize 모드 비교</h2>
+      <p>같은 외부 입력을 title · 버튼 label · template 에 넣는다. 문자열 HTML 은 <code>@daracl/core</code> 의 <code>sanitizeHtml</code> 로 정리된다. 페이로드는 <code>alert</code> 대신 로그만 남긴다.</p>
+      <label class="field" style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; margin-bottom: 14px">외부 입력 (페이로드)
+        <input id="payload" />
+      </label>
+      <div class="cards">
+        <div class="card">
+          <h3>기본 <span class="badge">권장</span></h3>
+          <p>title · label 은 정리, template 은 신뢰된 HTML 로 그대로 (폼 유지). 외부 값을 template 에 넣으면 안 된다.</p>
+          <button type="button" data-mode="default">열기</button>
+        </div>
+        <div class="card">
+          <h3><code>sanitize: true</code> <span class="badge">외부 값</span></h3>
+          <p>template 까지 정리한다. 외부 값을 본문에 표시할 때.</p>
+          <button type="button" data-mode="true">열기</button>
+        </div>
+        <div class="card">
+          <h3><code>sanitize: false</code> <span class="badge warn">위험</span></h3>
+          <p>0.0.7 동작. 정리하지 않는다. 신뢰된 값에만 쓴다.</p>
+          <button type="button" data-mode="false">열기</button>
+        </div>
+        <div class="card">
+          <h3><code>sanitize: 함수</code></h3>
+          <p>앱의 sanitizer(DOMPurify 등)를 지정한다. 이 예제는 모든 태그를 글자로 바꾼다.</p>
+          <button type="button" data-mode="fn">열기</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="example-content">
+      <h2>iframe url</h2>
+      <p><code>url</code> 은 http · https · mailto · tel · 상대 경로만 연다. 그 외는 iframe 을 만들지 않고 <code>console.warn</code> 을 남긴다.</p>
+      <div class="actions">
+        <button type="button" data-url="./basic.html">상대 경로 (허용)</button>
+        <button type="button" data-url="javascript:parent.__xss('url')">javascript: (차단)</button>
+        <button type="button" data-url="data:text/html,&lt;script&gt;parent.__xss('data')&lt;/script&gt;">data:text/html (차단)</button>
+      </div>
+    </section>
+
+    <section class="example-content">
+      <div class="panel-title">결과 <button type="button" data-clear="log">지우기</button></div>
+      <pre class="log" id="log" role="status" aria-live="polite"></pre>
+    </section>
+  </main>
+
+  <script type="module">
+    import Dialog from "/src/index.js";
+    import { createLog } from "./asset/page.js";
+
+    const log = createLog("log");
+    // 페이로드가 실행되면 이 함수가 호출된다.
+    window.__xss = (where) => log(`⚠ 스크립트 실행됨 : ${where}`);
+
+    const payload = document.getElementById("payload");
+    payload.value = '<img src=x onerror="__xss(\'onerror\')"><b>굵은 글씨</b> <a href="javascript:__xss(\'link\')">링크</a>';
+
+    const inspect = (d) => {
+      const w = d.dialogWrapperElement;
+      const count = (sel) => w.querySelectorAll(sel).length;
+      const scripts = [...w.querySelectorAll("*")].filter((el) => [...el.attributes].some((a) => a.name.startsWith("on") || /^\s*javascript:/i.test(a.value))).length;
+      log(`위험 속성 ${scripts}개 · <b> ${count("b")}개 · <img> ${count("img")}개`);
+    };
+
+    const modes = {
+      default: {},
+      true: { sanitize: true },
+      false: { sanitize: false },
+      fn: { sanitize: (html) => html.replace(/</g, "&lt;") },
+    };
+
+    document.querySelectorAll("[data-mode]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const mode = btn.dataset.mode;
+        const value = payload.value;
+        const d = Dialog.create({
+          title: value,
+          width: 520,
+          height: 240,
+          ...modes[mode],
+          // 기본 모드에서 외부 값을 template 에 넣으면 그대로 실행될 수 있으므로 이 예제에서는 고정 문구를 쓴다.
+          template: mode === "default" ? "<p>template 은 앱이 만든 신뢰된 HTML 만 넣는다.</p>" : value,
+          buttons: [{ label: value, styleClass: "warning", callback: () => d.destroy() }],
+        });
+        log(`[${mode}]`);
+        inspect(d);
+      })
+    );
+
+    document.querySelectorAll("[data-url]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const warn = console.warn;
+        console.warn = (msg) => log(`console.warn : ${msg}`);
+        const d = Dialog.create({ title: btn.textContent, url: btn.dataset.url, width: 560, height: 360, resizable: true });
+        console.warn = warn;
+        log(`iframe ${d.dialogWrapperElement.querySelectorAll("iframe").length}개`);
+      })
+    );
+  </script>
+</body>
+
+</html>
