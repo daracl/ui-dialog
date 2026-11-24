@@ -31,6 +31,11 @@ describe("daracl.dialog.scss", () => {
     expect(css).toContain("color: var(--ddlg-btn-primary-color, #004085)");
   });
 
+  it("header move 커서는 .draggable 일 때만 적용된다", () => {
+    expect(css).toMatch(/\.daracl-dialog-wrapper\.draggable > \.daracl-dialog > \.dialog-header\s*\{\s*cursor: move/);
+    expect(css).toMatch(/\.daracl-dialog-wrapper > \.daracl-dialog > \.dialog-header\s*\{[^}]*cursor: default/);
+  });
+
   it("접두사 없는 CSS 변수를 선언하지 않는다", () => {
     const declared = css.match(/(^|[;{\s])--[\w-]+\s*:/g) || [];
     declared.forEach((d) => {

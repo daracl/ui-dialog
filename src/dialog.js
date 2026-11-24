@@ -75,7 +75,7 @@ const FOCUSABLE_SELECTOR = [
  * @property {number} [zIndex = 10000] - css z-index
  * @property {boolean} [dragOverflow = true] - drag 시 창 밖으로 넘어갈 수 있는지 여부
  * @property {DialogButton[]} [buttons = []] - dialog 하단 버튼
- * @property {number} [moveDelay = 15] - drag delay time
+ * @property {number} [moveDelay = 15] - requestAnimationFrame 이 없는 환경에서만 쓰는 drag / resize 갱신 간격(ms). 일반 브라우저는 화면 갱신 주기마다 반영한다
  * @property {false | ((this: Dialog, element: HTMLElement) => void)} [afterOpen = false] - 오픈후 호출
  */
 
@@ -196,6 +196,8 @@ export default class Dialog {
     this.eventList = [];
     /** drag / resize 지연 타이머 @type {Set<ReturnType<typeof setTimeout>>} */
     this.timerSet = new Set();
+    /** drag / resize 화면 갱신 요청(requestAnimationFrame) id @type {Set<number>} */
+    this.frameSet = new Set();
 
     const dialogWrapperElement = document.createElement("div");
     dialogWrapperElement.className = `daracl-dialog-wrapper hide dd-${DIALOG_IDX}`;
@@ -222,6 +224,8 @@ export default class Dialog {
     this.addEvent(dialogWrapperElement, "keydown", this.onKeydown);
 
     if (this.options.draggable !== false) {
+      // header 의 move 커서는 .draggable 일 때만 적용된다.
+      dialogWrapperElement.classList.add("draggable");
       this.initDrag();
     }
 
@@ -355,6 +359,63 @@ export default class Dialog {
     this.timerSet.delete(timer);
   }
 
+  /**
+   * 마우스 / 터치 이동을 화면 갱신 주기(requestAnimationFrame)마다 한 번만 반영한다.
+   * 한 프레임 안의 여러 move 이벤트는 마지막 좌표만 쓰고, flush 는 남은 좌표를 바로 반영한다 (놓을 때 마지막 이동 유지).
+   * requestAnimationFrame 이 없는 환경에서는 moveDelay(ms) 타이머로 대신한다.
+   * @param {(point: {clientX: number, clientY: number, pageX: number, pageY: number}) => void} apply
+   */
+  createFrameUpdater(apply) {
+    /** @type {{clientX: number, clientY: number, pageX: number, pageY: number} | null} */
+    let pending = null;
+    let frame = 0;
+    /** @type {ReturnType<typeof setTimeout> | undefined} */
+    let timer;
+
+    const cancel = () => {
+      if (frame) {
+        cancelAnimationFrame(frame);
+        this.frameSet.delete(frame);
+        frame = 0;
+      }
+      this.clearTimer(timer);
+      timer = undefined;
+    };
+
+    const run = () => {
+      cancel();
+      const point = pending;
+      pending = null;
+      if (point && this.dialogWrapperElement) {
+        apply(point);
+      }
+    };
+
+    return {
+      /** @param {{clientX: number, clientY: number, pageX: number, pageY: number}} point */
+      request: (point) => {
+        pending = point;
+        if (frame || timer !== undefined) return;
+
+        if (typeof requestAnimationFrame === "function") {
+          const id = requestAnimationFrame(() => {
+            this.frameSet.delete(id);
+            frame = 0;
+            run();
+          });
+          frame = id;
+          this.frameSet.add(id);
+        } else {
+          timer = this.setTimer(() => {
+            timer = undefined;
+            run();
+          }, Math.max(this.options.moveDelay || 0, 0));
+        }
+      },
+      flush: run,
+    };
+  }
+
   /** 사이즈 조절 초기화 */
   initResize() {
     const dialogElement = this.dialogWrapperElement;
@@ -403,75 +464,62 @@ export default class Dialog {
 
       this.addEvent(document, "mouseup touchend touchcancel", onResizeMouseUp);
     });
-    let startTime = -1;
-    let moveTimer;
-    const moveDelay = this.options.moveDelay;
+    const resizeFrame = this.createFrameUpdater((point) => {
+      let moveX = point.pageX - startX,
+        moveY = point.pageY - startY;
+
+      moveY = isResizeTop ? moveY * -1 : moveY;
+      moveX = isResizeLeft ? moveX * -1 : moveX;
+
+      let resizeHeight = dialogHeight + moveY,
+        resizeWidth = dialogWidth + moveX;
+
+      if (this.options.minHeight >= resizeHeight) {
+        resizeHeight = this.options.minHeight;
+        moveY = (dialogHeight - resizeHeight) * -1;
+      }
+
+      if (this.options.minWidth >= resizeWidth) {
+        resizeWidth = this.options.minWidth;
+        moveX = (dialogWidth - resizeWidth) * -1;
+      }
+
+      let topVal = -1;
+      if (isResizeTop) {
+        topVal = offsetY - moveY;
+        if (topVal <= 0) {
+          topVal = 0;
+          resizeHeight = dialogHeight + offsetY;
+        }
+        dialogElement.style.top = topVal + "px";
+      }
+
+      let leftVal = -1;
+      if (isResizeLeft) {
+        leftVal = offsetX - moveX;
+        if (leftVal <= 0) {
+          leftVal = 0;
+          resizeWidth = dialogWidth + offsetX;
+        }
+        dialogElement.style.left = leftVal + "px";
+      }
+
+      if (moveMode != "b" && moveMode != "t") {
+        dialogElement.style.width = resizeWidth + "px";
+      }
+
+      if (moveMode != "r" && moveMode != "l") {
+        dialogElement.style.height = resizeHeight + "px";
+      }
+    });
+
     const onResizeMouseMove = (e) => {
-      if (startTime == -1) {
-        startTime = new Date().getTime();
-      }
-
-      if (new Date().getTime() - moveDelay <= startTime) {
-        this.clearTimer(moveTimer);
-      }
-
-      const point = eventPoint(e);
-
-      moveTimer = this.setTimer(() => {
-        startTime = -1;
-        if (!this.options) return;
-        let moveX = point.pageX - startX,
-          moveY = point.pageY - startY;
-
-        moveY = isResizeTop ? moveY * -1 : moveY;
-        moveX = isResizeLeft ? moveX * -1 : moveX;
-
-        let resizeHeight = dialogHeight + moveY,
-          resizeWidth = dialogWidth + moveX;
-
-        if (this.options.minHeight >= resizeHeight) {
-          resizeHeight = this.options.minHeight;
-          moveY = (dialogHeight - resizeHeight) * -1;
-        }
-
-        if (this.options.minWidth >= resizeWidth) {
-          resizeWidth = this.options.minWidth;
-          moveX = (dialogWidth - resizeWidth) * -1;
-        }
-
-        let topVal = -1;
-        if (isResizeTop) {
-          topVal = offsetY - moveY;
-          if (topVal <= 0) {
-            topVal = 0;
-            resizeHeight = dialogHeight + offsetY;
-          }
-          dialogElement.style.top = topVal + "px";
-        }
-
-        let leftVal = -1;
-        if (isResizeLeft) {
-          leftVal = offsetX - moveX;
-          if (leftVal <= 0) {
-            leftVal = 0;
-            resizeWidth = dialogWidth + offsetX;
-          }
-          dialogElement.style.left = leftVal + "px";
-        }
-
-        if (moveMode != "b" && moveMode != "t") {
-          dialogElement.style.width = resizeWidth + "px";
-        }
-
-        if (moveMode != "r" && moveMode != "l") {
-          dialogElement.style.height = resizeHeight + "px";
-        }
-      }, moveDelay);
+      resizeFrame.request(eventPoint(e));
     };
 
     const onResizeMouseUp = () => {
-      this.clearTimer(moveTimer);
-      startTime = -1;
+      // 놓기 직전의 마지막 이동을 버리지 않고 반영한다.
+      resizeFrame.flush();
       this.removeEvent(document, "mousemove touchmove", onResizeMouseMove);
       this.removeEvent(document, "mouseup touchend touchcancel", onResizeMouseUp);
     };
@@ -534,33 +582,20 @@ export default class Dialog {
 
       this.addEvent(document, "mouseup touchend touchcancel", onMouseUp);
     });
-    let startTime = -1;
-    let moveTimer;
-    const moveDelay = this.options.moveDelay;
+    const dragFrame = this.createFrameUpdater((point) => {
+      this.setPosition(point, offsetX, offsetY, dialogWidth, dialogHeight);
+    });
+
     const onMouseMove = (e) => {
       if (isDragging) {
-        if (startTime == -1) {
-          startTime = new Date().getTime();
-        }
-
-        if (new Date().getTime() - moveDelay <= startTime) {
-          this.clearTimer(moveTimer);
-        }
-
-        const point = eventPoint(e);
-
-        moveTimer = this.setTimer(() => {
-          startTime = -1;
-          if (!this.dialogWrapperElement) return;
-          this.setPosition(point, offsetX, offsetY, dialogWidth, dialogHeight);
-        }, moveDelay);
+        dragFrame.request(eventPoint(e));
       }
     };
 
     const onMouseUp = () => {
+      // 놓기 직전의 마지막 이동을 버리지 않고 반영한다. (0.0.7 에서는 마지막 지연 이동이 버려졌다)
+      dragFrame.flush();
       isDragging = false;
-      startTime = -1;
-      this.clearTimer(moveTimer);
 
       dialogElement.classList.remove("move-on");
       this.removeEvent(document, "mousemove touchmove", onMouseMove);
@@ -953,6 +988,11 @@ export default class Dialog {
 
     this.timerSet.forEach((timer) => clearTimeout(timer));
     this.timerSet.clear();
+
+    if (typeof cancelAnimationFrame === "function") {
+      this.frameSet.forEach((frame) => cancelAnimationFrame(frame));
+    }
+    this.frameSet.clear();
 
     this.removeDialogOverrayElement();
 

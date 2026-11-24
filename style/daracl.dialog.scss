@@ -67,6 +67,11 @@ $default-theme: theme.$default-theme;
     transform: none !important;
   }
 
+  // draggable: false 이면 header 에 move 커서를 표시하지 않는다.
+  &.draggable > .daracl-dialog > .dialog-header {
+    cursor: move;
+  }
+
   &.move-on {
     .dialog-move-overay {
       display: block !important;
@@ -109,7 +114,7 @@ $default-theme: theme.$default-theme;
       background: themes.themed(panel-header-bg);
       border: themes.themed(border-light-color);
       border-radius: 4px 4px 0px 0px;
-      cursor: move;
+      cursor: default;
 
       > .btn-area {
         position: absolute;

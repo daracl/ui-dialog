@@ -116,7 +116,7 @@ SEC-01(url 주입 · 위험 스킴), SEC-02(title · label XSS), SEC-04(class �
 - Chrome 외 브라우저, 스크린리더, 실제 터치 기기 확인.
 - 추적되는 생성물 `style/daracl.dialog(.min).css(.map)` 갱신 / 추적 해제 (생성물 · 삭제 → 사용자 결정).
 - 하네스 저장소 `config/projects.json` `cssVarPrefix: "ddlg"`, `CONVENTIONS.md` 5절 갱신.
-- drag 종료 시 마지막 지연 이동 반영 (P2-7), iframe `sandbox` 옵션 (P2-8).
+- iframe `sandbox` 옵션 (P2-8). (P2-7 drag 마지막 이동은 13절에서 완료)
 - `node_modules/@daracl/ui-style` 이 형제 저장소 링크에서 레지스트리 0.0.8 설치본으로 바뀌었다 (`npm install` 결과, 두 소스 `src/` 동일 확인). 링크를 쓰려면 다시 연결해야 한다.
 
 ## 10. 추가 개선 권장
@@ -183,3 +183,10 @@ ui-grid 와 다른 점: `aggressiveHtmlMinify` · uitest 목 API · link-core �
 - ui-grid 와 같은 방식: main push 중 version 이 바뀐 경우만 lint · typecheck · test · build 후 `npm publish`, OIDC 기본 / NPM_TOKEN 대안. 설정은 `docs/NPM_PUBLISH.md`.
 - `deploy.yaml` 삭제 (사용자 승인). `package.json` 저장소 정보를 `daracl/ui-dialog` 로 수정, `publishConfig` 추가.
 - **주의:** 작업 트리의 `package.json` version 이 `0.0.8` (npm 최신 0.0.7)이다. 이 변경을 main 에 push 하면 바로 0.0.8 배포가 실행된다.
+
+## 13. 추가 작업: header 커서 · drag / resize 끊김 (사용자 요청)
+
+- `draggable: false` 이면 header 에 move 커서를 표시하지 않는다. drag 가 켜진 경우만 wrapper 에 `draggable` 클래스를 붙이고 `cursor: move` 는 그 아래에만 적용한다.
+- 끊김 원인: mousemove 마다 `moveDelay`(15ms) 타이머를 다시 걸고 이전 타이머를 지우는 방식이라, 마우스를 계속 움직이는 동안 반영이 밀리고 몰려서 처리되었다. 놓을 때는 마지막 이동이 버려졌다 (P2-7).
+- 개선: `createFrameUpdater` 로 화면 갱신 주기(`requestAnimationFrame`)마다 마지막 좌표만 한 번 반영하고, 놓을 때 남은 좌표를 바로 반영(flush)한다. 요청 id 는 `frameSet` 에 두고 `destroy()` 에서 취소한다. `moveDelay` 는 호환을 위해 남기며 `requestAnimationFrame` 이 없는 환경의 대체 간격으로만 쓴다.
+- 검증: jest 109 통과 (한 프레임 여러 move → 1회 반영, 놓을 때 마지막 좌표 반영, destroy 후 타이머 0). 실제 브라우저의 체감 부드러움은 확인하지 못했다.

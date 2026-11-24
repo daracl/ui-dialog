@@ -46,6 +46,7 @@ export interface DialogOptions {
   zIndex?: number;
   dragOverflow?: boolean;
   buttons?: DialogButton[];
+  /** requestAnimationFrame 이 없는 환경에서만 쓰는 drag / resize 갱신 간격(ms). 일반 브라우저는 화면 갱신 주기마다 반영한다. */
   moveDelay?: number;
   afterOpen?: false | ((this: Dialog, element: HTMLElement) => void);
 }

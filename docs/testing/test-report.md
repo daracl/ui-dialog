@@ -75,7 +75,7 @@ PASS index.cjs: 동작 · sanitize
 | 항목 | 방법 | 결과 |
 | --- | --- | --- |
 | 열기 · 포커스 | `dialogObj.show()` | 포커스가 본문 링크로 이동 |
-| drag | 헤더를 마우스로 끌기 (700,320 → 450,200) | 이동, `move-on` 해제. 마지막 약 50px 이동은 반영되지 않음 (기존 `moveDelay` 동작, P2-7) |
+| drag | 헤더를 마우스로 끌기 (700,320 → 450,200) | 이동, `move-on` 해제. 마지막 약 50px 이동은 반영되지 않음 (기존 `moveDelay` 동작, P2-7 — 이후 requestAnimationFrame + flush 로 수정, improvement-report 13절) |
 | resize | 오른쪽 아래 핸들 끌기 | 500×137 → 583×235 |
 | dark 테마 | `<html data-daracl-theme="dark">`, `theme-vars.css` 없이 | 본문 `rgb(29,30,31)`, 글자 `rgb(207,211,220)`, info 버튼 `rgb(18,65,74)` / `rgb(182,239,251)`, overlay `#000` |
 | sanitize 데모 | `alert` 를 `console.log` 로 바꾼 뒤 실행 | `[onerror]` 0개, `<b>` 유지, `[xss-alert]` 로그 없음 |

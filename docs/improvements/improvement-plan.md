@@ -48,7 +48,7 @@
 | P2-4 | 버튼 대비 개선 | 완료 |
 | P2-5 | JSDoc 타입 + `checkJs` 타입 검사, `types/index.d.ts` 를 실제 API 와 일치, named export 추가 | 완료 |
 | P2-6 | 의존성 정리 (ui-grid 기준) | 완료 |
-| P2-7 | drag 를 놓을 때 마지막 지연 이동이 버려짐 (기존 동작) | 보류 — 동작 변경, 별도 결정 |
+| P2-7 | drag 를 놓을 때 마지막 지연 이동이 버려짐 (기존 동작) | 완료 — 사용자 요청(끊김 개선)으로 requestAnimationFrame 갱신 + 놓을 때 flush |
 | P2-8 | iframe `sandbox` 옵션 | 보류 — 새 옵션, 별도 결정 |
 | P2-9 | **빌드를 vite 로 전환 (ui-grid 구조, 사용자 요청)**, 기존 산출물 이름 유지, 구 빌드 파일 6개 삭제(사용자 승인) | 완료 |
 

@@ -78,7 +78,8 @@ describe("Dialog 기본 API", () => {
     const w = wrapperOf(d);
     expect(w.parentElement.id).toBe("daraclDialogHidden");
     expect(w.parentElement.className).toBe("daracl-dialog-hidden");
-    expect(w.className).toMatch(/^daracl-dialog-wrapper dd-\d+$/);
+    // draggable 기본값(true)이면 header move 커서용 draggable 클래스가 붙는다.
+    expect(w.className).toMatch(/^daracl-dialog-wrapper dd-\d+ draggable$/);
     expect(w.querySelector(":scope > .daracl-dialog > .dialog-header > .btn-area > .dialog-maximise")).not.toBeNull();
     expect(w.querySelector(".dialog-header .dialog-close")).not.toBeNull();
     expect(w.querySelector(".dialog-body > .dialog-move-overay")).not.toBeNull();
@@ -216,6 +217,37 @@ describe("Dialog 기본 API", () => {
     }
   });
 
+  it("drag : 한 프레임의 여러 mousemove 는 마지막 좌표로 한 번만 반영하고, 놓을 때 마지막 이동을 버리지 않는다", () => {
+    jest.useFakeTimers();
+    const d = make({ title: "drag", template: "x" });
+    const w = wrapperOf(d);
+    const header = w.querySelector(".dialog-header");
+    Object.defineProperty(w, "clientWidth", { configurable: true, value: 400 });
+    Object.defineProperty(w, "clientHeight", { configurable: true, value: 300 });
+    mouse(header, "mousedown", { clientX: 100, clientY: 100 });
+    const startLeft = w.style.left;
+
+    const setPosition = jest.spyOn(d, "setPosition");
+    mouse(document, "mousemove", { clientX: 110, clientY: 110 });
+    mouse(document, "mousemove", { clientX: 120, clientY: 120 });
+    mouse(document, "mousemove", { clientX: 130, clientY: 140 });
+    // 프레임 전에는 반영하지 않는다.
+    expect(setPosition).not.toHaveBeenCalled();
+    expect(w.style.left).toBe(startLeft);
+    jest.advanceTimersByTime(16);
+    expect(setPosition).toHaveBeenCalledTimes(1);
+    expect(w.style.left).toBe("30px");
+    expect(w.style.top).toBe("40px");
+
+    // 프레임을 기다리지 않고 바로 놓아도 마지막 좌표가 반영된다. (0.0.7 은 버려졌다)
+    mouse(document, "mousemove", { clientX: 170, clientY: 180 });
+    mouse(document, "mouseup");
+    expect(w.style.left).toBe("70px");
+    expect(w.style.top).toBe("80px");
+    expect(jest.getTimerCount()).toBe(0);
+    setPosition.mockRestore();
+  });
+
   it("drag : 터치 이벤트(touchstart / touchmove / touchend)도 동작한다", () => {
     jest.useFakeTimers();
     const d = make({ title: "drag", template: "x" });
@@ -251,6 +283,11 @@ describe("Dialog 기본 API", () => {
     const w2 = wrapperOf(d2);
     mouse(w2.querySelector(".dialog-header"), "mousedown", { clientX: 10, clientY: 10 });
     expect(w2.classList.contains("move-on")).toBe(false);
+  });
+
+  it("draggable : 기본은 .draggable 클래스가 붙고, false 이면 붙지 않는다 (header move 커서)", () => {
+    expect(wrapperOf(make({ template: "x" })).classList.contains("draggable")).toBe(true);
+    expect(wrapperOf(make({ template: "x", draggable: false })).classList.contains("draggable")).toBe(false);
   });
 
   it("resize : 오른쪽 아래 핸들로 크기를 바꾸고 최소 크기를 지킨다", () => {

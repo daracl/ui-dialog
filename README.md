@@ -88,7 +88,7 @@ var dialogObj = Daracl.dialog.create({
 | zIndex | css z-index | 10000 |  |
 | dragOverflow | drag 시 창 밖으로 넘어갈 수 있는지 여부 | true |  |
 | buttons | dialog 하단 버튼 | [] |  |
-| moveDelay | drag delay time  | 15 |  |
+| moveDelay | drag / resize 갱신 간격(ms). `requestAnimationFrame` 이 없는 환경에서만 사용하며, 일반 브라우저는 화면 갱신 주기마다 반영한다 | 15 |  |
 | afterOpen | 오픈후 발생할 이벤트 (`this` 는 dialog, 인자는 wrapper 요소) | false |  |
 
 
